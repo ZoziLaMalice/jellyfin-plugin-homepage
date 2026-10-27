@@ -59,6 +59,7 @@ html.hp-header body.withSectionTabs .pageWithAbsoluteTabs:not(#indexPage) {
   padding-top: 4.4em !important;
 }
 
+html.hp-active[data-hp-page='home'] header.MuiAppBar-root,
 html.hp-active[data-hp-page='home'] .skinHeader {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0)) !important;
   backdrop-filter: none !important;
@@ -66,8 +67,8 @@ html.hp-active[data-hp-page='home'] .skinHeader {
   box-shadow: none !important;
 }
 
-html.hp-active:not([data-hp-page='home']) #indexPage {
-  padding-top: 4.6em !important;
+html.hp-active:not([data-hp-page='home']) .hp-root {
+  padding-top: max(0px, calc(4.4em - var(--hp-top-offset, 0px)));
 }
 
 .hp-nav {
@@ -79,6 +80,21 @@ html.hp-active:not([data-hp-page='home']) #indexPage {
   margin: 0 0.6em;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.hp-nav-modern {
+  margin: 0 0.4em;
+  font-size: 15px;
+}
+
+/* Keep only Jellyfin's logo when our links replace its own. */
+html.hp-hide-native header.MuiAppBar-root .MuiToolbar-root > .MuiStack-root > :not(:first-child) {
+  display: none !important;
+}
+
+/* The modern bar's right-hand icon group grows to fill the row; let our links take that space. */
+header.MuiAppBar-root .MuiToolbar-root > .hp-nav + .MuiBox-root {
+  flex-grow: 0 !important;
 }
 
 .hp-nav::-webkit-scrollbar {
@@ -144,6 +160,7 @@ html.hp-active:not([data-hp-page='home']) #indexPage {
 
 .hp-hero {
   position: relative;
+  margin-top: calc(-1 * var(--hp-top-offset, 0px));
   height: min(82vh, 52vw);
   min-height: 420px;
   overflow: hidden;

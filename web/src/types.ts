@@ -115,7 +115,7 @@ export interface ClientLayout {
   seerrConfigured: boolean;
   sonarrConfigured: boolean;
   confirmRequests: boolean;
-  header: { enabled: boolean; replaceSearch: boolean; tabs: ClientTab[] };
+  header: { enabled: boolean; replaceSearch: boolean; hideNativeLinks: boolean; tabs: ClientTab[] };
   hero: { enabled: boolean; intervalSeconds: number };
   sections: ClientSection[];
   discoverRows: { id: string; page: 'Discover' | 'Movies' | 'Tv'; title: string }[];

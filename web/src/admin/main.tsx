@@ -435,6 +435,7 @@ function Admin() {
         <div class="hpa-panel">
           <Check label="Afficher la barre de navigation dans l'en-tête" checked={config.Header.Enabled} onChange={(v) => update({ Header: { ...config.Header, Enabled: v } })} />
           <Check label="Le bouton loupe ouvre la recherche combinée (médiathèque + Seerr)" checked={config.Header.ReplaceSearch} onChange={(v) => update({ Header: { ...config.Header, ReplaceSearch: v } })} />
+          <Check label="Masquer les liens d'origine de Jellyfin (favoris, bibliothèques) dans la barre" hint="Le logo et le menu restent. Ajoute des onglets « Bibliothèque Jellyfin » pour garder des raccourcis." checked={config.Header.HideNativeLinks} onChange={(v) => update({ Header: { ...config.Header, HideNativeLinks: v } })} />
           <div class="hpa-list">
             {config.Header.Tabs.map((t, i) => (
               <div key={i} class={`hpa-row ${t.Enabled ? '' : 'is-off'}`}>

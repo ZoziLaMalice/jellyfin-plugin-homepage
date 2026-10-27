@@ -76,7 +76,7 @@ export interface PluginConfig {
   Language: string;
   SonarrUrl: string;
   SonarrApiKey: string;
-  Header: { Enabled: boolean; ReplaceSearch: boolean; Tabs: HeaderTab[] };
+  Header: { Enabled: boolean; ReplaceSearch: boolean; HideNativeLinks: boolean; Tabs: HeaderTab[] };
   Hero: HeroConfig;
   Sections: SectionConfig[];
   DiscoverRows: DiscoverRowConfig[];

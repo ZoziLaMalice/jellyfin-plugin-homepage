@@ -89,6 +89,9 @@ public class HeaderConfig
     /// <summary>Gets or sets a value indicating whether the header search button opens the combined (library + Seerr) search.</summary>
     public bool ReplaceSearch { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether Jellyfin's own top-bar links (favorites, libraries) are hidden, keeping only the logo.</summary>
+    public bool HideNativeLinks { get; set; } = true;
+
     public List<HeaderTab> Tabs { get; set; } = new();
 }
 

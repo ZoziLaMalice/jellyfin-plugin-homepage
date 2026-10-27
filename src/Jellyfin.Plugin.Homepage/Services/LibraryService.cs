@@ -66,6 +66,19 @@ public class LibraryService
         EnableUserData = true,
     };
 
+    /// <summary>Returns "movies" or "tvshows" for a library id, null when unknown.</summary>
+    public string? LibraryKind(string libraryId)
+    {
+        VirtualFolderInfo? folder = _libraryManager.GetVirtualFolders()
+            .FirstOrDefault(f => string.Equals(f.ItemId?.Replace("-", string.Empty, StringComparison.Ordinal), libraryId, StringComparison.OrdinalIgnoreCase));
+        return folder?.CollectionType switch
+        {
+            CollectionTypeOptions.movies => "movies",
+            CollectionTypeOptions.tvshows => "tvshows",
+            _ => null,
+        };
+    }
+
     // ----- Owned-title index ---------------------------------------------------------------
 
     /// <summary>Returns true when the path belongs to a placeholder library (JellyNext...).</summary>

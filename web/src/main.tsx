@@ -179,6 +179,12 @@ function reconcile() {
     render(<Routed />, state.root);
   }
 
+  // The hero slides under Jellyfin's (transparent) top bar: measure how far down our root starts.
+  if (window.scrollY < 4) {
+    const top = Math.max(0, Math.round(state.root.getBoundingClientRect().top + window.scrollY));
+    document.documentElement.style.setProperty('--hp-top-offset', `${top}px`);
+  }
+
   const pageKey = `${route.page}|${route.params.get('source') || ''}`;
   if (pageKey !== state.lastPage) {
     if (state.lastPage) window.scrollTo({ top: 0 });

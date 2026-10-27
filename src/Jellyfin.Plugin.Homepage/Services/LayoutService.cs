@@ -47,10 +47,12 @@ public class LayoutService
             {
                 Enabled = config.Header.Enabled && (settings.HeaderEnabled ?? true),
                 ReplaceSearch = config.Header.ReplaceSearch,
+                HideNativeLinks = config.Header.HideNativeLinks,
                 Tabs = config.Header.Tabs
                     .Where(t => t.Enabled)
                     .Where(t => SeerrService.IsConfigured || t.Type is not ("Discover" or "DiscoverMovies" or "DiscoverTv" or "Requests"))
-                    .Select(t => new ClientTab { Type = t.Type, Title = string.IsNullOrWhiteSpace(t.Title) ? t.Type : t.Title, Target = string.IsNullOrWhiteSpace(t.Target) ? null : t.Target })
+                    .Select(t => new ClientTab { Type = t.Type, Title = string.IsNullOrWhiteSpace(t.Title) ? t.Type : t.Title, Target = TabTarget(t) })
+                    .Where(t => t.Type != "Library" || t.Target != null)
                     .ToList(),
             },
             Hero = new ClientHero
@@ -290,6 +292,24 @@ public class LayoutService
         Display = section.Display,
         Items = items,
     };
+
+    /// <summary>Library tabs link to Jellyfin's own library page, which depends on the library kind.</summary>
+    private string? TabTarget(HeaderTab tab)
+    {
+        if (string.IsNullOrWhiteSpace(tab.Target))
+        {
+            return null;
+        }
+
+        if (tab.Type != "Library")
+        {
+            return tab.Target;
+        }
+
+        string id = tab.Target.Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+        string? kind = _library.LibraryKind(id);
+        return kind == null ? null : $"#/{(kind == "tvshows" ? "tv" : "movies")}?topParentId={id}&collectionType={kind}";
+    }
 
     private static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 

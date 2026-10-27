@@ -1,6 +1,5 @@
 import { render } from 'preact';
 import { Icon } from './components/Icon';
-import { serverId } from './jellyfin';
 import { currentRoute, isExcludedRoute, pageHash } from './route';
 import type { ClientLayout, ClientTab } from './types';
 
@@ -33,7 +32,7 @@ function tabHref(tab: ClientTab): string {
     case 'Requests':
       return pageHash('requests');
     case 'Library':
-      return `#/list?parentId=${encodeURIComponent(tab.target || '')}&serverId=${serverId()}`;
+      return tab.target || '#/home';
     case 'Link':
       return tab.target || '#/home';
   }
@@ -58,7 +57,7 @@ function isActive(tab: ClientTab): boolean {
     case 'Requests':
       return route.isHome && route.page === 'requests';
     case 'Library':
-      return Boolean(tab.target) && hash.includes(tab.target!);
+      return Boolean(tab.target) && hash.startsWith(tab.target!.split('&')[0]);
     case 'Link':
       return Boolean(tab.target) && hash === tab.target;
   }
@@ -89,11 +88,32 @@ function Nav({ tabs }: { tabs: ClientTab[] }) {
 }
 
 let navElement: HTMLElement | null = null;
-let searchHooked: Element | null = null;
 let replaceSearch = false;
+let searchHooked = false;
 
-function onSearchClick(event: Event) {
-  if (!replaceSearch) return;
+/** Jellyfin 12 has two top bars: the MUI app bar (current layout) and the legacy skinHeader. */
+function findHeaderHost(): { container: Element; before: Node | null; kind: 'modern' | 'legacy' } | null {
+  const toolbar = document.querySelector('header.MuiAppBar-root .MuiToolbar-root');
+  if (toolbar && toolbar.getBoundingClientRect().width > 0) {
+    // Keep the menu button (and the native library links, if any) on the left of our links.
+    const children = Array.from(toolbar.children).filter((c) => !c.classList.contains('hp-nav'));
+    const stack = children.find((c) => c.classList.contains('MuiStack-root'));
+    const anchor = stack || children[0] || null;
+    return { container: toolbar, before: anchor ? anchor.nextSibling : toolbar.firstChild, kind: 'modern' };
+  }
+  const headerTop = document.querySelector('.skinHeader .headerTop');
+  if (headerTop && headerTop.getBoundingClientRect().width > 0) {
+    const left = headerTop.querySelector('.headerLeft');
+    return { container: headerTop, before: left ? left.nextSibling : headerTop.firstChild, kind: 'legacy' };
+  }
+  return null;
+}
+
+function onDocumentClick(event: MouseEvent) {
+  if (!replaceSearch || !navElement) return;
+  const target = event.target as Element | null;
+  const search = target?.closest('header.MuiAppBar-root a[href="#/search"], .skinHeader .headerSearchButton');
+  if (!search) return;
   event.preventDefault();
   event.stopImmediatePropagation();
   window.location.hash = pageHash('search');
@@ -101,11 +121,12 @@ function onSearchClick(event: Event) {
 
 /** Adds (or refreshes) our navigation inside Jellyfin's top bar. */
 export function syncHeader(layout: ClientLayout | null) {
-  const headerTop = document.querySelector('.skinHeader .headerTop');
   const enabled = Boolean(layout?.enabled && layout.header.enabled && layout.header.tabs.length) && !isExcludedRoute();
-  document.documentElement.classList.toggle('hp-header', enabled);
+  const host = enabled ? findHeaderHost() : null;
+  document.documentElement.classList.toggle('hp-header', Boolean(host));
+  document.documentElement.classList.toggle('hp-hide-native', Boolean(host && layout?.header.hideNativeLinks));
 
-  if (!enabled || !headerTop || !layout) {
+  if (!host || !layout) {
     if (navElement) {
       render(null, navElement);
       navElement.remove();
@@ -114,21 +135,18 @@ export function syncHeader(layout: ClientLayout | null) {
     return;
   }
 
-  if (!navElement || navElement.parentElement !== headerTop) {
+  if (!navElement || navElement.parentElement !== host.container) {
     navElement?.remove();
     navElement = document.createElement('nav');
-    navElement.className = 'hp-nav';
     navElement.setAttribute('aria-label', 'Navigation');
-    const left = headerTop.querySelector('.headerLeft');
-    headerTop.insertBefore(navElement, left ? left.nextSibling : headerTop.firstChild);
+    host.container.insertBefore(navElement, host.before);
   }
+  navElement.className = `hp-nav hp-nav-${host.kind}`;
 
-  // The Search tab already exists in our bar: keep the header button pointing to the combined search.
   replaceSearch = layout.header.replaceSearch;
-  const searchButton = document.querySelector('.skinHeader .headerSearchButton');
-  if (searchButton && searchButton !== searchHooked) {
-    searchButton.addEventListener('click', onSearchClick, true);
-    searchHooked = searchButton;
+  if (!searchHooked) {
+    document.addEventListener('click', onDocumentClick, true);
+    searchHooked = true;
   }
 
   render(<Nav tabs={layout.header.tabs} />, navElement);

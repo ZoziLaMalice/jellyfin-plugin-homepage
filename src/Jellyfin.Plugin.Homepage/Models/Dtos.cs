@@ -258,6 +258,8 @@ public class ClientHeader
 
     public bool ReplaceSearch { get; set; }
 
+    public bool HideNativeLinks { get; set; }
+
     public List<ClientTab> Tabs { get; set; } = new();
 }
 

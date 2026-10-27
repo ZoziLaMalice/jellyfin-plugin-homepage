@@ -131,10 +131,20 @@ public class LibraryService
             Dictionary<string, Guid> index = new(StringComparer.Ordinal);
             try
             {
-                IReadOnlyList<BaseItem> items = _libraryManager.GetItemList(new InternalItemsQuery
+                // Only real libraries: placeholder libraries (JellyNext...) are recognised by their folder locations,
+                // because the item path is not always loaded by lightweight queries.
+                Guid[] realLibraries = _libraryManager.GetVirtualFolders()
+                    .Where(f => f.CollectionType is CollectionTypeOptions.movies or CollectionTypeOptions.tvshows)
+                    .Where(f => !f.Locations.Any(IsVirtualPath))
+                    .Select(f => Guid.TryParse(f.ItemId, out Guid g) ? g : Guid.Empty)
+                    .Where(g => g != Guid.Empty)
+                    .ToArray();
+
+                IReadOnlyList<BaseItem> items = realLibraries.Length == 0 ? Array.Empty<BaseItem>() : _libraryManager.GetItemList(new InternalItemsQuery
                 {
                     IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
                     Recursive = true,
+                    AncestorIds = realLibraries,
                     IsVirtualItem = false,
                     // Jellyfin 12 only loads provider ids when the query asks for them.
                     DtoOptions = new DtoOptions(false) { Fields = new List<ItemFields> { ItemFields.ProviderIds, ItemFields.Path }, EnableImages = false, EnableUserData = false },
@@ -524,14 +534,19 @@ public class LibraryService
 
         if (requestType == "tv" && item is MediaBrowser.Controller.Entities.TV.Series placeholderSeries && card.RequestSeasons == null)
         {
+            // JellyNext seasons can be virtual; their placeholder episodes carry the season number too.
             List<int> seasons = _libraryManager.GetItemList(new InternalItemsQuery
                 {
-                    ParentId = placeholderSeries.Id,
-                    IncludeItemTypes = new[] { BaseItemKind.Season },
-                    DtoOptions = new DtoOptions(false),
+                    AncestorIds = new[] { placeholderSeries.Id },
+                    IncludeItemTypes = new[] { BaseItemKind.Season, BaseItemKind.Episode },
+                    Recursive = true,
+                    DtoOptions = new DtoOptions(false) { EnableImages = false, EnableUserData = false },
                 })
-                .Where(s => s.IndexNumber.HasValue && s.IndexNumber.Value > 0)
-                .Select(s => s.IndexNumber!.Value)
+                .Select(i => i is MediaBrowser.Controller.Entities.TV.Season ? i.IndexNumber : i.ParentIndexNumber)
+                .Where(n => n is > 0)
+                .Select(n => n!.Value)
+                .Distinct()
+                .OrderBy(n => n)
                 .ToList();
 
             // JellyNext "next season" folders only hold the season(s) to come, owned or not.

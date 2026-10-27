@@ -1,0 +1,20 @@
+[
+  {
+    "guid": "acdcaecb-228d-4e50-acfb-479d2f8a90a6",
+    "name": "Homepage",
+    "description": "Hero, barre de navigation, sections d'accueil personnalisables et intégration Seerr.",
+    "overview": "Une page d'accueil sur mesure pour Jellyfin",
+    "owner": "ZoziLaMalice",
+    "category": "General",
+    "versions": [
+      {
+        "version": "0.1.0.2",
+        "changelog": "Fix ambiguous SearchResult reference",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.2/homepage_0.1.0.2.zip",
+        "checksum": "7c65e7913d347cf33affd30e5e183f38",
+        "timestamp": "2026-10-27T07:23:11Z"
+      }
+    ]
+  }
+]

@@ -581,6 +581,7 @@ declare global {
 window.HomepageAdmin = {
   mount(el: HTMLElement) {
     render(null, el);
+    el.textContent = '';
     render(<Admin />, el);
   },
 };

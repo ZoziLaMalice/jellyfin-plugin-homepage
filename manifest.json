@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.9",
+        "changelog": "Only show dates on upcoming cards, format them in the viewer's locale",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.9/homepage_0.1.0.9.zip",
+        "checksum": "16bfd97c0e43c12f2f3e07b171e47dc6",
+        "timestamp": "2026-10-27T07:57:59Z"
+      },
+      {
         "version": "0.1.0.8",
         "changelog": "Sonarr calendar diagnostics, next-season placeholders request only the new season, readable JSON",
         "targetAbi": "12.3.0.0",

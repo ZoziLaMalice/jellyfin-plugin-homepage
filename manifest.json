@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.6",
+        "changelog": "Admin page: clear the loading placeholder",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.6/homepage_0.1.0.6.zip",
+        "checksum": "6c6e83532103559c4d3cba5046c7c01c",
+        "timestamp": "2026-10-27T07:39:53Z"
+      },
+      {
         "version": "0.1.0.5",
         "changelog": "Hero transition and navigation polish",
         "targetAbi": "12.3.0.0",

@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.3",
+        "changelog": "Support Jellyfin 12's MUI top bar, library tabs, hero under the header",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.3/homepage_0.1.0.3.zip",
+        "checksum": "3376e69836abda137956e73a372c0029",
+        "timestamp": "2026-10-27T07:29:13Z"
+      },
+      {
         "version": "0.1.0.2",
         "changelog": "Fix ambiguous SearchResult reference",
         "targetAbi": "12.3.0.0",

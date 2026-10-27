@@ -1,0 +1,151 @@
+name: Build plugin
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ '**.md' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT: src/Jellyfin.Plugin.Homepage/Jellyfin.Plugin.Homepage.csproj
+      PLUGIN_GUID: acdcaecb-228d-4e50-acfb-479d2f8a90a6
+      TARGET_ABI: 12.3.0.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute version
+        run: |
+          BASE=$(sed -n 's#.*<Version>\([0-9]*\.[0-9]*\.[0-9]*\)\.[0-9]*</Version>.*#\1#p' "$PROJECT" | head -1)
+          echo "VERSION=$BASE.${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build web client
+        run: |
+          set -o pipefail
+          cd web
+          npm ci 2>&1 | tee -a ../build.log
+          npm run check 2>&1 | tee -a ../build.log
+          npm run build 2>&1 | tee -a ../build.log
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build plugin
+        run: |
+          set -o pipefail
+          dotnet publish "$PROJECT" -c Release -p:Version=$VERSION -o out 2>&1 | tee -a build.log
+
+      - name: Package
+        run: |
+          mkdir -p dist/Homepage
+          cp out/Jellyfin.Plugin.Homepage.dll dist/Homepage/
+          cat > dist/Homepage/meta.json <<EOF
+          {
+            "category": "General",
+            "changelog": "Built from ${GITHUB_SHA}",
+            "description": "Hero, barre de navigation, sections d'accueil personnalisables et intégration Seerr.",
+            "guid": "$PLUGIN_GUID",
+            "name": "Homepage",
+            "overview": "Une page d'accueil sur mesure pour Jellyfin",
+            "owner": "ZoziLaMalice",
+            "targetAbi": "$TARGET_ABI",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "version": "$VERSION",
+            "status": "Active",
+            "autoUpdate": true,
+            "imagePath": "",
+            "assemblies": ["Jellyfin.Plugin.Homepage.dll"]
+          }
+          EOF
+          (cd dist && zip -r "../homepage_$VERSION.zip" Homepage)
+          echo "CHECKSUM=$(md5sum homepage_$VERSION.zip | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: homepage_${{ env.VERSION }}
+          path: homepage_*.zip
+
+      - name: Publish release and manifest
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" "homepage_$VERSION.zip" \
+            --title "Homepage $VERSION" \
+            --notes "$(git log -1 --pretty=%B)" \
+            --target "$GITHUB_SHA"
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin manifest:manifest 2>/dev/null || true
+          mkdir -p /tmp/manifest
+          if git show manifest:manifest.json > /tmp/manifest/old.json 2>/dev/null; then :; else echo '[]' > /tmp/manifest/old.json; fi
+
+          python3 - <<'PY'
+          import json, os
+          path = "/tmp/manifest/old.json"
+          data = json.load(open(path))
+          version = os.environ["VERSION"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          entry = {
+              "version": version,
+              "changelog": os.popen("git log -1 --pretty=%s").read().strip(),
+              "targetAbi": os.environ["TARGET_ABI"],
+              "sourceUrl": f"https://github.com/{repo}/releases/download/v{version}/homepage_{version}.zip",
+              "checksum": os.environ["CHECKSUM"],
+              "timestamp": os.popen("date -u +%Y-%m-%dT%H:%M:%SZ").read().strip(),
+          }
+          plugin = next((p for p in data if p.get("guid") == os.environ["PLUGIN_GUID"]), None)
+          if plugin is None:
+              plugin = {
+                  "guid": os.environ["PLUGIN_GUID"],
+                  "name": "Homepage",
+                  "description": "Hero, barre de navigation, sections d'accueil personnalisables et intégration Seerr.",
+                  "overview": "Une page d'accueil sur mesure pour Jellyfin",
+                  "owner": "ZoziLaMalice",
+                  "category": "General",
+                  "versions": [],
+              }
+              data.append(plugin)
+          plugin["versions"] = [entry] + [v for v in plugin["versions"] if v["version"] != version][:19]
+          json.dump(data, open("/tmp/manifest/manifest.json", "w"), indent=2, ensure_ascii=False)
+          PY
+
+          git worktree add /tmp/manifest-wt manifest 2>/dev/null || { git worktree add --detach /tmp/manifest-wt && (cd /tmp/manifest-wt && git checkout --orphan manifest && git rm -rf . >/dev/null 2>&1 || true); }
+          cp /tmp/manifest/manifest.json /tmp/manifest-wt/manifest.json
+          cd /tmp/manifest-wt
+          git add manifest.json
+          git commit -m "Homepage $VERSION"
+          git push origin HEAD:manifest
+
+      - name: Publish build log on failure
+        if: failure() && github.event_name != 'pull_request'
+        run: |
+          [ -f build.log ] || echo "no build log" > build.log
+          cp build.log /tmp/build.log
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan ci-logs-tmp
+          git rm -rf . >/dev/null 2>&1 || true
+          cp /tmp/build.log build.log
+          echo "$GITHUB_SHA" > sha.txt
+          git add build.log sha.txt
+          git commit -m "Build log for $GITHUB_SHA"
+          git push -f origin HEAD:ci-logs

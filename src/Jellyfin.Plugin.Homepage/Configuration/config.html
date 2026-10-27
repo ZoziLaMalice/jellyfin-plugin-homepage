@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Homepage</title>
+</head>
+<body>
+<div id="HomepageConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection">
+                <div class="sectionTitleContainer flex align-items-center">
+                    <h2 class="sectionTitle">Homepage</h2>
+                </div>
+                <p class="fieldDescription">Accueil personnalisé : carrousel, barre de navigation, sections et intégration Seerr. Le plugin <strong>File Transformation</strong> doit être installé.</p>
+            </div>
+            <div id="homepage-admin-root"><p>Chargement…</p></div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        (function () {
+            var page = document.querySelector('#HomepageConfigPage');
+
+            function mount() {
+                var root = page.querySelector('#homepage-admin-root');
+                if (window.HomepageAdmin && root) {
+                    window.HomepageAdmin.mount(root);
+                }
+            }
+
+            function load() {
+                if (window.HomepageAdmin) {
+                    mount();
+                    return;
+                }
+                if (!document.querySelector('link[data-homepage-admin]')) {
+                    var css = document.createElement('link');
+                    css.rel = 'stylesheet';
+                    css.href = ApiClient.getUrl('Homepage/admin.css');
+                    css.setAttribute('data-homepage-admin', '');
+                    document.head.appendChild(css);
+                }
+                if (!document.querySelector('script[data-homepage-admin]')) {
+                    var script = document.createElement('script');
+                    script.src = ApiClient.getUrl('Homepage/admin.js');
+                    script.setAttribute('data-homepage-admin', '');
+                    script.onload = mount;
+                    document.head.appendChild(script);
+                } else {
+                    window.addEventListener('homepage-admin-ready', mount, { once: true });
+                }
+            }
+
+            page.addEventListener('pageshow', load);
+            if (page.classList.contains('page') && !page.classList.contains('hide')) {
+                load();
+            }
+        })();
+    </script>
+</div>
+</body>
+</html>

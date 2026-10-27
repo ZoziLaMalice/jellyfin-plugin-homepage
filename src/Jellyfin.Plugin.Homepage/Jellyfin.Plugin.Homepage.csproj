@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <JellyfinVersion>12.3.0</JellyfinVersion>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <Version>0.1.0.0</Version>
+        <AssemblyVersion>$(Version)</AssemblyVersion>
+        <FileVersion>$(Version)</FileVersion>
+        <RootNamespace>Jellyfin.Plugin.Homepage</RootNamespace>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <NoWarn>$(NoWarn);CS1591;CA1002;CA2227;CA1819</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Provided by the Jellyfin server at runtime: never copied into the plugin folder. -->
+        <PackageReference Include="Jellyfin.Model" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
+        <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
+        <PackageReference Include="Jellyfin.Common" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
+        <PackageReference Include="Jellyfin.Extensions" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Configuration\config.html" />
+        <EmbeddedResource Include="..\..\web\dist\homepage.js" LogicalName="Jellyfin.Plugin.Homepage.Web.homepage.js" Condition="Exists('..\..\web\dist\homepage.js')" />
+        <EmbeddedResource Include="..\..\web\dist\homepage.css" LogicalName="Jellyfin.Plugin.Homepage.Web.homepage.css" Condition="Exists('..\..\web\dist\homepage.css')" />
+        <EmbeddedResource Include="..\..\web\dist\admin.js" LogicalName="Jellyfin.Plugin.Homepage.Web.admin.js" Condition="Exists('..\..\web\dist\admin.js')" />
+        <EmbeddedResource Include="..\..\web\dist\admin.css" LogicalName="Jellyfin.Plugin.Homepage.Web.admin.css" Condition="Exists('..\..\web\dist\admin.css')" />
+    </ItemGroup>
+
+</Project>

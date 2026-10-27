@@ -9,6 +9,7 @@ using MediaBrowser.Model.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SearchResult = Jellyfin.Plugin.Homepage.Models.SearchResult;
 
 namespace Jellyfin.Plugin.Homepage.Controllers;
 

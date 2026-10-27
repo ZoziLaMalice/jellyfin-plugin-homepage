@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.11",
+        "changelog": "Index only real libraries; detect JellyNext next seasons from virtual seasons and placeholder episodes",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.11/homepage_0.1.0.11.zip",
+        "checksum": "31f396f15177ed45e4af2027208b0591",
+        "timestamp": "2026-10-27T18:59:16Z"
+      },
+      {
         "version": "0.1.0.10",
         "changelog": "Fix owned-title index: load provider ids (Jellyfin 12 only joins them on request)",
         "targetAbi": "12.3.0.0",

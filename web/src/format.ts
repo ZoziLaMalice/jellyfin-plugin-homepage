@@ -1,6 +1,7 @@
 import type { HomeCard } from './types';
 
-const locale = () => navigator.language || 'fr-FR';
+// The interface is written in French, so dates follow it whatever the browser language.
+const locale = () => 'fr-FR';
 
 export function formatRuntime(ticks?: number): string {
   const minutes = Math.round((ticks || 0) / 600000000);

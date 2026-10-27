@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.10",
+        "changelog": "Fix owned-title index: load provider ids (Jellyfin 12 only joins them on request)",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.10/homepage_0.1.0.10.zip",
+        "checksum": "c510c1b4d7c28816551f89871a403297",
+        "timestamp": "2026-10-27T18:48:21Z"
+      },
+      {
         "version": "0.1.0.9",
         "changelog": "Only show dates on upcoming cards, format them in the viewer's locale",
         "targetAbi": "12.3.0.0",

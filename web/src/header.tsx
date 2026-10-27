@@ -127,6 +127,7 @@ export function syncHeader(layout: ClientLayout | null) {
   document.documentElement.classList.toggle('hp-hide-native', Boolean(host && layout?.header.hideNativeLinks));
 
   if (!host || !layout) {
+    document.documentElement.classList.remove('hp-replace-search');
     if (navElement) {
       render(null, navElement);
       navElement.remove();
@@ -144,6 +145,7 @@ export function syncHeader(layout: ClientLayout | null) {
   navElement.className = `hp-nav hp-nav-${host.kind}`;
 
   replaceSearch = layout.header.replaceSearch;
+  document.documentElement.classList.toggle('hp-replace-search', replaceSearch && Boolean(document.querySelector('header.MuiAppBar-root a[href="#/search"], .skinHeader .headerSearchButton')));
   if (!searchHooked) {
     document.addEventListener('click', onDocumentClick, true);
     searchHooked = true;

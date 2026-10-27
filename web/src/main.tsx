@@ -179,16 +179,23 @@ function reconcile() {
     render(<Routed />, state.root);
   }
 
-  // The hero slides under Jellyfin's (transparent) top bar: measure how far down our root starts.
-  if (window.scrollY < 4) {
-    const top = Math.max(0, Math.round(state.root.getBoundingClientRect().top + window.scrollY));
-    document.documentElement.style.setProperty('--hp-top-offset', `${top}px`);
-  }
+  measureTopOffset();
 
   const pageKey = `${route.page}|${route.params.get('source') || ''}`;
   if (pageKey !== state.lastPage) {
     if (state.lastPage) window.scrollTo({ top: 0 });
     state.lastPage = pageKey;
+  }
+}
+
+/** The hero slides under Jellyfin's transparent top bar: measure how far down the home tab starts. */
+function measureTopOffset() {
+  const host = state.root?.parentElement;
+  if (!host) return;
+  const top = Math.max(0, Math.round(host.getBoundingClientRect().top + window.scrollY));
+  const value = `${top}px`;
+  if (document.documentElement.style.getPropertyValue('--hp-top-offset') !== value) {
+    document.documentElement.style.setProperty('--hp-top-offset', value);
   }
 }
 
@@ -205,6 +212,7 @@ function start() {
   window.HomepagePlugin?.stop();
   window.addEventListener('hashchange', schedule);
   window.addEventListener('popstate', schedule);
+  window.addEventListener('resize', measureTopOffset);
   document.addEventListener('viewshow', schedule);
   state.observer = new MutationObserver((records) => {
     // Our own renders (hero slides, rows) do not require a reconcile.

@@ -38,7 +38,7 @@ html.hp-active #homeTab {
 }
 
 .hp-root {
-  display: block;
+  display: flow-root;
   color: var(--hp-text);
   min-height: 100vh;
   padding-bottom: 4em;
@@ -135,6 +135,11 @@ header.MuiAppBar-root .MuiToolbar-root > .hp-nav + .MuiBox-root {
   margin-left: auto;
 }
 
+/* Jellyfin's own search button already opens our search. */
+html.hp-replace-search .hp-nav-search {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .hp-nav-link span:not(.hp-icon) {
     display: none;
@@ -227,6 +232,11 @@ header.MuiAppBar-root .MuiToolbar-root > .hp-nav + .MuiBox-root {
 .hp-hero-slide.is-active .hp-hero-content {
   transform: none;
   opacity: 1;
+}
+
+/* The outgoing slide's text disappears at once so two titles never overlap. */
+.hp-hero-slide:not(.is-active) .hp-hero-content {
+  transition: opacity 0.2s, transform 0s 0.2s;
 }
 
 .hp-hero-tag {
@@ -333,7 +343,7 @@ header.MuiAppBar-root .MuiToolbar-root > .hp-nav + .MuiBox-root {
 .hp-hero-dots {
   position: absolute;
   z-index: 3;
-  left: var(--hp-gutter);
+  right: var(--hp-gutter);
   bottom: clamp(36px, 7%, 70px);
   display: flex;
   gap: 6px;

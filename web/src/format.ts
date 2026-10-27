@@ -1,6 +1,6 @@
 import type { HomeCard } from './types';
 
-const locale = () => document.documentElement.lang || navigator.language || 'fr-FR';
+const locale = () => navigator.language || 'fr-FR';
 
 export function formatRuntime(ticks?: number): string {
   const minutes = Math.round((ticks || 0) / 600000000);
@@ -40,9 +40,11 @@ export function relativeDay(iso?: string): string | undefined {
   const day = new Date(date);
   day.setHours(0, 0, 0, 0);
   const delta = Math.round((day.getTime() - today.getTime()) / 86400000);
-  const time = date.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
-  if (delta <= 0) return `Aujourd'hui · ${time}`;
-  if (delta === 1) return `Demain · ${time}`;
+  // Midnight UTC means "a date without a time" (release dates): show the day only.
+  const dateOnly = date.getUTCHours() === 0 && date.getUTCMinutes() === 0;
+  const time = dateOnly ? '' : ` · ${date.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}`;
+  if (delta <= 0) return `Aujourd'hui${time}`;
+  if (delta === 1) return `Demain${time}`;
   if (delta < 7) {
     const weekday = date.toLocaleDateString(locale(), { weekday: 'long' });
     return weekday.charAt(0).toUpperCase() + weekday.slice(1);

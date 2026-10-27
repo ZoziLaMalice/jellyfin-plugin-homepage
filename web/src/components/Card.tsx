@@ -55,7 +55,9 @@ export function Card({ card, shape }: { card: HomeCard; shape: CardShape }) {
   const image = landscape ? card.thumb || card.backdrop || card.poster : card.poster || card.thumb;
   const src = imageUrl(image, landscape ? 420 : 260);
   const progress = card.kind === 'local' && card.progress && card.progress > 0 && card.progress < 100 ? card.progress : 0;
-  const dateLabel = card.date && !card.badge ? relativeDay(card.date) : undefined;
+  // Dates are only shown for what is still to come (next episodes, upcoming releases).
+  const upcoming = card.date ? new Date(card.date).getTime() > Date.now() - 12 * 3600000 : false;
+  const dateLabel = upcoming && !card.badge ? relativeDay(card.date) : undefined;
   const subtitle = card.subtitle || (card.year ? String(card.year) : '');
 
   const onClick = (event: JSX.TargetedMouseEvent<HTMLElement>) => {

@@ -136,9 +136,11 @@ public class LibraryService
                     IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
                     Recursive = true,
                     IsVirtualItem = false,
-                    DtoOptions = new DtoOptions(false),
+                    // Jellyfin 12 only loads provider ids when the query asks for them.
+                    DtoOptions = new DtoOptions(false) { Fields = new List<ItemFields> { ItemFields.ProviderIds, ItemFields.Path }, EnableImages = false, EnableUserData = false },
                 });
 
+                _logger.LogDebug("Homepage: indexing {Count} movies and series", items.Count);
                 foreach (BaseItem item in items)
                 {
                     if (IsVirtualPath(item.Path))

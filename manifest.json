@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.12",
+        "changelog": "Format dates in French to match the interface",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.12/homepage_0.1.0.12.zip",
+        "checksum": "a924de60f8fec674ea81a88c7f3da1af",
+        "timestamp": "2026-10-27T19:04:12Z"
+      },
+      {
         "version": "0.1.0.11",
         "changelog": "Index only real libraries; detect JellyNext next seasons from virtual seasons and placeholder episodes",
         "targetAbi": "12.3.0.0",

@@ -109,6 +109,15 @@ public class HomeCard
 
     [JsonIgnore]
     public bool IsVirtual { get; set; }
+
+    [JsonIgnore]
+    public DateTime AddedAt { get; set; }
+
+    [JsonIgnore]
+    public DateTime ContentAddedAt { get; set; }
+
+    [JsonIgnore]
+    public DateTime? PremieredAt { get; set; }
 }
 
 public class SectionRow

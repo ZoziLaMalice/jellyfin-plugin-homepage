@@ -422,6 +422,9 @@ public class LibraryService
             RunTimeTicks = dto.RunTimeTicks,
             Genres = (dto.Genres ?? Array.Empty<string>()).Take(3).ToList(),
             IsVirtual = isVirtual,
+            AddedAt = item.DateCreated,
+            ContentAddedAt = (item as Folder)?.DateLastMediaAdded ?? item.DateCreated,
+            PremieredAt = item.PremiereDate,
             Played = dto.UserData?.Played == true,
             Progress = dto.UserData?.PlayedPercentage,
             PositionTicks = dto.UserData is { PlaybackPositionTicks: > 0 } ? dto.UserData.PlaybackPositionTicks : null,
@@ -627,7 +630,10 @@ public class LibraryService
     {
         "Random" => cards.OrderBy(_ => Random.Shared.Next()).ToList(),
         "CommunityRating" => cards.OrderByDescending(c => c.Rating ?? 0).ToList(),
-        _ => cards,
+        "PremiereDate" => cards.OrderByDescending(c => c.PremieredAt ?? DateTime.MinValue).ToList(),
+        "Name" => cards.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList(),
+        "DateLastContentAdded" => cards.OrderByDescending(c => c.ContentAddedAt).ToList(),
+        _ => cards.OrderByDescending(c => c.AddedAt).ToList(),
     };
 
     private static IEnumerable<HomeCard> Interleave(List<HomeCard> first, List<HomeCard> second)

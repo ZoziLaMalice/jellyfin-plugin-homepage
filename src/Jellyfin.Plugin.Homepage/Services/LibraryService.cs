@@ -532,8 +532,9 @@ public class LibraryService
                 .Select(s => s.IndexNumber!.Value)
                 .ToList();
 
-            // JellyNext "next season" folders only hold the missing season(s) of a series you own.
-            if (owned.HasValue && seasons.Count > 0)
+            // JellyNext "next season" folders only hold the season(s) to come, owned or not.
+            bool nextSeasonFolder = dto.Path?.Contains("nextseason", StringComparison.OrdinalIgnoreCase) == true;
+            if ((owned.HasValue || nextSeasonFolder) && seasons.Count > 0)
             {
                 card.RequestSeasons = seasons;
             }

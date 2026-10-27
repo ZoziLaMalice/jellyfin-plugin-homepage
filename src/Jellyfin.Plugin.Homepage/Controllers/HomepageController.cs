@@ -264,6 +264,20 @@ public class HomepageController : ControllerBase
         }
     }
 
+    [HttpGet("Admin/SonarrCalendar")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<IActionResult> SonarrCalendar([FromQuery] int days = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            return Json(await _sonarr.DiagnoseAsync(Math.Clamp(days, 1, 120), ct).ConfigureAwait(false));
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 502);
+        }
+    }
+
     [HttpGet("Admin/SeerrUsers")]
     [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<IActionResult> SeerrUsers(CancellationToken ct)

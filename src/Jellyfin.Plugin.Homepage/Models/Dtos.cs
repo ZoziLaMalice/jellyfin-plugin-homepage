@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,6 +12,7 @@ public static class JsonDefaults
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNameCaseInsensitive = true,
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 }
 

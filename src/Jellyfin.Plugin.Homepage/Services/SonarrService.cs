@@ -37,6 +37,22 @@ public class SonarrService
         return "Sonarr " + SeerrService.Str(doc.RootElement, "version") + " — clé valide";
     }
 
+    /// <summary>Lists what the calendar returns and whether each series was found in Jellyfin.</summary>
+    public async Task<List<string>> DiagnoseAsync(int days, CancellationToken ct)
+    {
+        lock (_lock)
+        {
+            _cache = null;
+        }
+
+        List<CalendarEntry> entries = await CalendarAsync(days, ct).ConfigureAwait(false);
+        return entries
+            .GroupBy(e => e.TvdbId)
+            .Select(g => g.OrderBy(e => e.AirDateUtc).First())
+            .Select(e => string.Create(CultureInfo.InvariantCulture, $"{e.SeriesTitle} S{e.Season:00}E{e.Episode:00} {e.AirDateUtc:yyyy-MM-dd} tvdb={e.TvdbId} tmdb={e.TmdbId} → {(_library.FindLocal("tv", e.TmdbId, e.TvdbId) is { } id ? "Jellyfin " + id.ToString("N") : "absent de Jellyfin")}"))
+            .ToList();
+    }
+
     /// <summary>One card per series: its next episode airing in the window.</summary>
     public async Task<List<HomeCard>> UpcomingAsync(User user, SectionConfig section, CancellationToken ct)
     {
@@ -113,6 +129,7 @@ public class SonarrService
                 entries.Add(new CalendarEntry
                 {
                     TvdbId = SeerrService.Int(series, "tvdbId") ?? 0,
+                    SeriesTitle = SeerrService.Str(series, "title"),
                     TmdbId = SeerrService.Int(series, "tmdbId"),
                     Season = SeerrService.Int(e, "seasonNumber") ?? 0,
                     Episode = SeerrService.Int(e, "episodeNumber") ?? 0,
@@ -158,6 +175,8 @@ public class SonarrService
         public int TvdbId { get; init; }
 
         public int? TmdbId { get; init; }
+
+        public string? SeriesTitle { get; init; }
 
         public int Season { get; init; }
 

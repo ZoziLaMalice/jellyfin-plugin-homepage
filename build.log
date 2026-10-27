@@ -1,0 +1,25 @@
+
+added 5 packages, and audited 6 packages in 924ms
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> check
+> tsc --noEmit
+
+
+> build
+> node build.mjs
+
+
+  dist/homepage.js   44.1kb
+  dist/admin.js      34.9kb
+  dist/homepage.css  19.4kb
+  dist/admin.css      4.3kb
+
+⚡ Done in 17ms
+  Determining projects to restore...
+  Restored /home/runner/work/jellyfin-plugin-homepage/jellyfin-plugin-homepage/src/Jellyfin.Plugin.Homepage/Jellyfin.Plugin.Homepage.csproj (in 2.09 sec).
+/home/runner/work/jellyfin-plugin-homepage/jellyfin-plugin-homepage/src/Jellyfin.Plugin.Homepage/Controllers/HomepageController.cs(123,29): error CS0104: 'SearchResult' is an ambiguous reference between 'Jellyfin.Plugin.Homepage.Models.SearchResult' and 'MediaBrowser.Controller.Library.SearchResult' [/home/runner/work/jellyfin-plugin-homepage/jellyfin-plugin-homepage/src/Jellyfin.Plugin.Homepage/Jellyfin.Plugin.Homepage.csproj]

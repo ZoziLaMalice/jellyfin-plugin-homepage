@@ -365,6 +365,23 @@ function Admin() {
 
       {tab === 'Seerr' && (
         <div class="hpa-panel">
+          <div class="hpa-test">
+            <button
+              type="button"
+              class="hpa-button hpa-button-ghost"
+              onClick={() =>
+                api<{ ok: boolean; message: string }>('Homepage/Admin/ImportFromEnhanced', { method: 'POST', body: {} })
+                  .then((r) => {
+                    setMessage(r.message);
+                    if (r.ok) reload();
+                  })
+                  .catch((e: Error) => setMessage(e.message))
+              }
+            >
+              <span class="material-icons input" aria-hidden="true" /> Importer Seerr et Sonarr depuis Jellyfin Enhanced
+            </button>
+            <span class="hpa-hint">Copie l'URL et la clé déjà enregistrées dans Jellyfin Enhanced, côté serveur.</span>
+          </div>
           <div class="hpa-grid">
             <Field label="URL de Seerr (vue depuis le serveur Jellyfin)">
               <Text value={config.SeerrUrl} onChange={(v) => update({ SeerrUrl: v })} placeholder="http://192.168.1.10:5055" />

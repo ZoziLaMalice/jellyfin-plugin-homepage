@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Xml.Linq;
+using MediaBrowser.Common.Configuration;
 using Jellyfin.Plugin.Homepage.Configuration;
 using Jellyfin.Plugin.Homepage.Models;
 using Jellyfin.Plugin.Homepage.Services;
@@ -25,6 +27,7 @@ public class HomepageController : ControllerBase
     private readonly SonarrService _sonarr;
     private readonly UserSettingsStore _userSettings;
     private readonly ILibraryManager _libraryManager;
+    private readonly IApplicationPaths _paths;
 
     public HomepageController(
         LayoutService layout,
@@ -32,8 +35,10 @@ public class HomepageController : ControllerBase
         SeerrService seerr,
         SonarrService sonarr,
         UserSettingsStore userSettings,
-        ILibraryManager libraryManager)
+        ILibraryManager libraryManager,
+        IApplicationPaths paths)
     {
+        _paths = paths;
         _layout = layout;
         _library = library;
         _seerr = seerr;
@@ -301,6 +306,70 @@ public class HomepageController : ControllerBase
                 type = f.CollectionType == CollectionTypeOptions.movies ? "movies" : "tvshows",
                 isVirtual = f.Locations.Any(LibraryService.IsVirtualPath),
             }));
+    }
+
+    /// <summary>
+    /// Copies Seerr and Sonarr connection settings from Jellyfin Enhanced's configuration, when present.
+    /// Secrets are copied server-side and never returned.
+    /// </summary>
+    [HttpPost("Admin/ImportFromEnhanced")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public IActionResult ImportFromEnhanced()
+    {
+        string file = Path.Combine(_paths.PluginConfigurationsPath, "Jellyfin.Plugin.JellyfinEnhanced.xml");
+        if (!System.IO.File.Exists(file))
+        {
+            return Json(new { ok = false, message = "Configuration de Jellyfin Enhanced introuvable." });
+        }
+
+        XElement root = XDocument.Load(file).Root!;
+        string Value(string name) => root.Element(name)?.Value?.Trim() ?? string.Empty;
+
+        PluginConfiguration config = Plugin.Instance.Configuration;
+        List<string> imported = new();
+
+        string seerrUrl = Value("JellyseerrUrls").Split(new[] { '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
+        string seerrKey = Value("JellyseerrApiKey");
+        if (seerrUrl.Length > 0 && seerrKey.Length > 0)
+        {
+            config.SeerrUrl = seerrUrl;
+            config.SeerrApiKey = seerrKey;
+            imported.Add("Seerr (" + seerrUrl + ")");
+        }
+
+        string sonarrUrl = Value("SonarrUrl");
+        string sonarrKey = Value("SonarrApiKey");
+        try
+        {
+            using JsonDocument instances = JsonDocument.Parse(string.IsNullOrWhiteSpace(Value("SonarrInstances")) ? "[]" : Value("SonarrInstances"));
+            JsonElement first = instances.RootElement.EnumerateArray()
+                .FirstOrDefault(i => !i.TryGetProperty("Enabled", out JsonElement e) || e.ValueKind != JsonValueKind.False);
+            if (first.ValueKind == JsonValueKind.Object)
+            {
+                sonarrUrl = first.TryGetProperty("Url", out JsonElement u) ? u.GetString() ?? sonarrUrl : sonarrUrl;
+                sonarrKey = first.TryGetProperty("ApiKey", out JsonElement k) ? k.GetString() ?? sonarrKey : sonarrKey;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        if (!string.IsNullOrWhiteSpace(sonarrUrl) && !string.IsNullOrWhiteSpace(sonarrKey))
+        {
+            config.SonarrUrl = sonarrUrl.Trim();
+            config.SonarrApiKey = sonarrKey.Trim();
+            imported.Add("Sonarr (" + config.SonarrUrl + ")");
+        }
+
+        if (imported.Count == 0)
+        {
+            return Json(new { ok = false, message = "Jellyfin Enhanced ne contient ni Seerr ni Sonarr configuré." });
+        }
+
+        Plugin.Instance.UpdateConfiguration(config);
+        _seerr.ForgetUsers();
+        _seerr.InvalidateCache();
+        return Json(new { ok = true, message = "Importé : " + string.Join(", ", imported) });
     }
 
     [HttpPost("Admin/ResetSections")]

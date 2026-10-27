@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.8",
+        "changelog": "Sonarr calendar diagnostics, next-season placeholders request only the new season, readable JSON",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.8/homepage_0.1.0.8.zip",
+        "checksum": "6e453fb4dd71e7b0daec2e62557c0578",
+        "timestamp": "2026-10-27T07:53:26Z"
+      },
+      {
         "version": "0.1.0.7",
         "changelog": "Admin: import Seerr and Sonarr settings from Jellyfin Enhanced",
         "targetAbi": "12.3.0.0",

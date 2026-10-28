@@ -90,7 +90,7 @@ public class LibraryService
             .Where(f => Guid.TryParse(f.ItemId, out Guid g) && _libraryManager.GetItemById(g) is Folder folder && folder.IsVisible(user))
             .Select(f => new LibraryChoice
             {
-                Id = UserSettingsStore.NormalizeId(f.ItemId),
+                Id = UserSettingsStore.NormalizeId(f.ItemId ?? string.Empty),
                 Name = f.Name,
                 Type = f.CollectionType == CollectionTypeOptions.movies ? "movies" : "tvshows",
                 IsVirtual = f.Locations.Any(IsVirtualPath),

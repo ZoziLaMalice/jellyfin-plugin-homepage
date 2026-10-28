@@ -25,6 +25,7 @@ public class LibraryService
     private readonly IUserManager _userManager;
     private readonly IDtoService _dtoService;
     private readonly ITVSeriesManager _tvSeriesManager;
+    private readonly UserSettingsStore _userSettings;
     private readonly ILogger<LibraryService> _logger;
     private readonly object _indexLock = new();
     private readonly ConcurrentDictionary<string, (DateTime At, List<string> Genres)> _genreCache = new();
@@ -37,12 +38,14 @@ public class LibraryService
         IUserManager userManager,
         IDtoService dtoService,
         ITVSeriesManager tvSeriesManager,
+        UserSettingsStore userSettings,
         ILogger<LibraryService> logger)
     {
         _libraryManager = libraryManager;
         _userManager = userManager;
         _dtoService = dtoService;
         _tvSeriesManager = tvSeriesManager;
+        _userSettings = userSettings;
         _logger = logger;
     }
 
@@ -77,6 +80,25 @@ public class LibraryService
             CollectionTypeOptions.tvshows => "tvshows",
             _ => null,
         };
+    }
+
+    /// <summary>Movie and series libraries the user can see (whatever their exclusions), for the library choice.</summary>
+    public List<LibraryChoice> UserLibraries(User user)
+    {
+        return _libraryManager.GetVirtualFolders()
+            .Where(f => f.CollectionType is CollectionTypeOptions.movies or CollectionTypeOptions.tvshows)
+            .Where(f => Guid.TryParse(f.ItemId, out Guid g) && _libraryManager.GetItemById(g) is Folder folder && folder.IsVisible(user))
+            .Select(f => new LibraryChoice
+            {
+                Id = UserSettingsStore.NormalizeId(f.ItemId),
+                Name = f.Name,
+                Type = f.CollectionType == CollectionTypeOptions.movies ? "movies" : "tvshows",
+                IsVirtual = f.Locations.Any(IsVirtualPath),
+            })
+            .OrderBy(l => l.Type, StringComparer.Ordinal)
+            .ThenBy(l => l.IsVirtual)
+            .ThenBy(l => l.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
     }
 
     // ----- Owned-title index ---------------------------------------------------------------
@@ -289,7 +311,7 @@ public class LibraryService
         }
 
         BaseItemKind[] kinds = ParseKinds(itemTypes);
-        string cacheKey = user.Id.ToString("N") + "|" + string.Join(',', libraryIds) + "|" + itemTypes;
+        string cacheKey = user.Id.ToString("N") + "|" + string.Join(',', libraryIds) + "|" + itemTypes + "|" + string.Join(',', _userSettings.ExcludedLibraries(user.Id).Order(StringComparer.Ordinal));
         List<string> genres;
         if (_genreCache.TryGetValue(cacheKey, out var cached) && DateTime.UtcNow - cached.At < GenreLifetime)
         {
@@ -356,9 +378,21 @@ public class LibraryService
 
     public List<HomeCard> Search(User user, string term, int limit)
     {
+        // With excluded libraries, search only the movie/series libraries the user kept.
+        Guid[] ancestors = Array.Empty<Guid>();
+        if (_userSettings.ExcludedLibraries(user.Id).Count > 0)
+        {
+            ancestors = ResolveLibraries(user, Array.Empty<string>(), new[] { BaseItemKind.Movie, BaseItemKind.Series }).Select(f => f.Id).ToArray();
+            if (ancestors.Length == 0)
+            {
+                return new List<HomeCard>();
+            }
+        }
+
         IReadOnlyList<BaseItem> items = _libraryManager.GetItemList(new InternalItemsQuery(user)
         {
             SearchTerm = term,
+            AncestorIds = ancestors,
             IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
             Recursive = true,
             Limit = limit * 2,
@@ -688,8 +722,14 @@ public class LibraryService
                 .Where(g => g != Guid.Empty);
         }
 
+        HashSet<string> excluded = _userSettings.ExcludedLibraries(user.Id);
         foreach (Guid id in ids)
         {
+            if (excluded.Contains(id.ToString("N")))
+            {
+                continue;
+            }
+
             if (_libraryManager.GetItemById(id) is Folder folder && folder.IsVisible(user))
             {
                 yield return folder;

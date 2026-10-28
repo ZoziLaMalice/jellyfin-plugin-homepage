@@ -8,6 +8,10 @@ import { Icon } from './Icon';
 
 let heroCache: { at: number; items: HomeCard[] } | null = null;
 
+export function clearHeroCache() {
+  heroCache = null;
+}
+
 export function Hero({ interval }: { interval: number }) {
   const [items, setItems] = useState<HomeCard[] | null>(heroCache && Date.now() - heroCache.at < 5 * 60000 ? heroCache.items : null);
   const [index, setIndex] = useState(0);

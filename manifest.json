@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.0.15",
+        "changelog": "Bibliothèques de l'accueil propres à chaque utilisateur (#1)",
+        "targetAbi": "12.3.0.0",
+        "sourceUrl": "https://github.com/ZoziLaMalice/jellyfin-plugin-homepage/releases/download/v0.1.0.15/homepage_0.1.0.15.zip",
+        "checksum": "ef3432799d0c8dda0a61e3e9a184b388",
+        "timestamp": "2026-10-28T18:18:40Z"
+      },
+      {
         "version": "0.1.0.13",
         "changelog": "Keep the top bar on one line on mobile; Favorites tab off by default",
         "targetAbi": "12.3.0.0",

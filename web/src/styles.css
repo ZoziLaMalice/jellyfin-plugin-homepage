@@ -87,6 +87,30 @@ html.hp-active:not([data-hp-page='home']) .hp-root {
   font-size: 15px;
 }
 
+/* Jellyfin's bar wraps when it runs out of room: keep everything on one line and let our links shrink/scroll. */
+html.hp-header header.MuiAppBar-root .MuiToolbar-root {
+  flex-wrap: nowrap !important;
+}
+
+html.hp-header header.MuiAppBar-root .MuiToolbar-root > .hp-nav {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+html.hp-header header.MuiAppBar-root .MuiToolbar-root > .MuiBox-root {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .hp-nav-modern {
+    gap: 0;
+    margin: 0 0.1em;
+  }
+  html.hp-header header.MuiAppBar-root .MuiToolbar-root > .MuiBox-root .MuiIconButton-root {
+    padding: 8px;
+  }
+}
+
 /* Keep only Jellyfin's logo when our links replace its own. */
 html.hp-hide-native header.MuiAppBar-root .MuiToolbar-root > .MuiStack-root > :not(:first-child) {
   display: none !important;

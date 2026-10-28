@@ -157,7 +157,7 @@ public static class DefaultsFactory
         new() { Type = "Discover", Title = "Découvrir" },
         new() { Type = "DiscoverMovies", Title = "Films" },
         new() { Type = "DiscoverTv", Title = "Séries" },
-        new() { Type = "Favorites", Title = "Favoris" },
+        new() { Type = "Favorites", Title = "Favoris", Enabled = false },
         new() { Type = "Requests", Title = "Mes demandes", Enabled = false },
         new() { Type = "Search", Title = "Rechercher" },
     };

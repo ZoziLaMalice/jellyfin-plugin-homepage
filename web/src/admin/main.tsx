@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import './admin.css';
 import { api } from '../jellyfin';
 import { Check, Field, IconButton, NumberInput, Select, Text, move, newId } from './fields';
-import type { DiscoverRowConfig, HeaderTab, JellyfinUser, LibraryInfo, PluginConfig, SectionConfig } from './types';
+import type { DiscoverRowConfig, HeaderTab, JellyfinUser, LibraryInfo, PluginConfig, SectionConfig, UserLibraries } from './types';
 
 const PLUGIN_ID = 'acdcaecb-228d-4e50-acfb-479d2f8a90a6';
 
@@ -38,7 +38,7 @@ const SORTS: [string, string][] = [
   ['Name', 'Nom'],
 ];
 
-const TABS = ['Général', 'Seerr', 'Sonarr', 'Navigation', 'Hero', 'Sections', 'Découvrir'] as const;
+const TABS = ['Général', 'Utilisateurs', 'Seerr', 'Sonarr', 'Navigation', 'Hero', 'Sections', 'Découvrir'] as const;
 type TabName = (typeof TABS)[number];
 
 interface JfClient {
@@ -254,6 +254,66 @@ function TestButton({ service }: { service: 'seerr' | 'sonarr' }) {
   );
 }
 
+
+/** Per-user library choice: applied to that user's hero, library/genre sections and search. Saved immediately. */
+function UserLibrariesPanel({ users }: { users: JellyfinUser[] }) {
+  const [userId, setUserId] = useState('');
+  const [data, setData] = useState<UserLibraries | null>(null);
+  const [state, setState] = useState<string | null>(null);
+
+  useEffect(() => {
+    setData(null);
+    setState(null);
+    if (!userId) return;
+    api<UserLibraries>(`Homepage/Admin/UserLibraries?userId=${userId}`)
+      .then(setData)
+      .catch((e: Error) => setState(`Erreur : ${e.message}`));
+  }, [userId]);
+
+  const toggle = (id: string, included: boolean) => {
+    if (!data) return;
+    const excluded = included ? data.excludedLibraryIds.filter((x) => x !== id) : [...data.excludedLibraryIds, id];
+    setData({ ...data, excludedLibraryIds: excluded });
+    setState('Enregistrement…');
+    api<UserLibraries>(`Homepage/Admin/UserLibraries?userId=${userId}`, { method: 'POST', body: { excludedLibraryIds: excluded } })
+      .then((r) => {
+        setData(r);
+        setState('Enregistré.');
+      })
+      .catch((e: Error) => setState(`Erreur : ${e.message}`));
+  };
+
+  return (
+    <div class="hpa-panel">
+      <Field label="Utilisateur" hint="Bibliothèques affichées sur l'accueil de cet utilisateur (carrousel, sections Médiathèque et Genres, recherche). Il peut aussi les changer lui-même dans « Mon accueil » si la personnalisation est autorisée.">
+        <Select value={userId} onChange={setUserId} options={[['', 'Choisir un utilisateur…'], ...users.map((u) => [u.Id.replace(/-/g, ''), u.Name] as [string, string])]} />
+      </Field>
+      {data &&
+        (['movies', 'tvshows'] as const).map((type) => {
+          const list = data.libraries.filter((l) => l.type === type);
+          if (list.length === 0) return null;
+          return (
+            <Field key={type} label={type === 'movies' ? 'Films' : 'Séries'}>
+              <div class="hpa-libraries">
+                {list.map((l) => (
+                  <label key={l.id} class="hpa-check hpa-library">
+                    <input type="checkbox" checked={!data.excludedLibraryIds.includes(l.id)} onChange={(e) => toggle(l.id, (e.target as HTMLInputElement).checked)} />
+                    <span>
+                      {l.name}
+                      {l.isVirtual ? ' · reco' : ''}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+          );
+        })}
+      {data && data.libraries.length === 0 && <p class="hpa-hint">Cet utilisateur n'a accès à aucune bibliothèque de films ou de séries.</p>}
+      {state && <p class="hpa-hint">{state}</p>}
+    </div>
+  );
+}
+
 function Admin() {
   const [config, setConfig] = useState<PluginConfig | null>(null);
   const [libraries, setLibraries] = useState<LibraryInfo[]>([]);
@@ -362,6 +422,8 @@ function Admin() {
           </details>
         </div>
       )}
+
+      {tab === 'Utilisateurs' && <UserLibrariesPanel users={users} />}
 
       {tab === 'Seerr' && (
         <div class="hpa-panel">

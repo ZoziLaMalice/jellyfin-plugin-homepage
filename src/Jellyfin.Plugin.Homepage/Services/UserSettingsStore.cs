@@ -51,12 +51,24 @@ public class UserSettingsStore
         });
     }
 
+    /// <summary>Library ids are compared without dashes and in lower case.</summary>
+    public static string NormalizeId(string id) => id.Replace("-", string.Empty, StringComparison.Ordinal).Trim().ToLowerInvariant();
+
+    /// <summary>Returns the libraries the user excluded from their home, normalized.</summary>
+    public HashSet<string> ExcludedLibraries(Guid userId) =>
+        Get(userId).ExcludedLibraryIds.Select(NormalizeId).ToHashSet(StringComparer.Ordinal);
+
     public void Save(Guid userId, UserSettings settings)
     {
         settings.Sections = settings.Sections
             .Where(s => !string.IsNullOrWhiteSpace(s.Id))
             .GroupBy(s => s.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
+            .ToList();
+        settings.ExcludedLibraryIds = (settings.ExcludedLibraryIds ?? new List<string>())
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(NormalizeId)
+            .Distinct(StringComparer.Ordinal)
             .ToList();
 
         lock (_writeLock)

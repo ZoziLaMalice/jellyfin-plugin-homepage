@@ -27,6 +27,34 @@ public class UserSettings
 
     /// <summary>Gets or sets the user's section order and visibility. Sections missing here keep the admin order.</summary>
     public List<UserSectionPreference> Sections { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the libraries (N format) this user does not want on their home: hero, library and genre sections, search.
+    /// New libraries are included until the user excludes them.
+    /// </summary>
+    public List<string> ExcludedLibraryIds { get; set; } = new();
+}
+
+/// <summary>A movie or series library the user can see, offered in the "my libraries" choice.</summary>
+public class LibraryChoice
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets movies or tvshows.</summary>
+    public string Type { get; set; } = "movies";
+
+    /// <summary>Gets or sets a value indicating whether the library holds placeholders (JellyNext recommendations...).</summary>
+    public bool IsVirtual { get; set; }
+}
+
+/// <summary>Admin view of one user's library choice.</summary>
+public class UserLibrariesDto
+{
+    public List<LibraryChoice> Libraries { get; set; } = new();
+
+    public List<string> ExcludedLibraryIds { get; set; } = new();
 }
 
 public class UserSectionPreference

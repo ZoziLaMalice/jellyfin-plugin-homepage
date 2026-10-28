@@ -126,4 +126,12 @@ export interface UserSettings {
   heroEnabled?: boolean | null;
   headerEnabled?: boolean | null;
   sections: { id: string; enabled: boolean }[];
+  excludedLibraryIds?: string[];
+}
+
+export interface LibraryChoice {
+  id: string;
+  name: string;
+  type: 'movies' | 'tvshows';
+  isVirtual: boolean;
 }

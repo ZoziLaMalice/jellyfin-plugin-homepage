@@ -239,8 +239,22 @@ public class HomepageController : ControllerBase
             return BadRequest();
         }
 
+        // When users can't customize their home, their library choice stays the one the admin set.
+        if (!Plugin.Instance.Configuration.AllowUserSections)
+        {
+            settings.ExcludedLibraryIds = _userSettings.Get(user.Id).ExcludedLibraryIds.ToList();
+        }
+
         _userSettings.Save(user.Id, settings);
         return Json(_layout.GetLayout(user));
+    }
+
+    [HttpGet("Libraries")]
+    [Authorize]
+    public IActionResult UserLibraries()
+    {
+        User? user = CurrentUser();
+        return user == null ? Unauthorized() : Json(_library.UserLibraries(user));
     }
 
     // ----- Admin ---------------------------------------------------------------------------
@@ -305,6 +319,49 @@ public class HomepageController : ControllerBase
         {
             return Problem(ex.Message, statusCode: 502);
         }
+    }
+
+    [HttpGet("Admin/UserLibraries")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public IActionResult GetUserLibraries([FromQuery] Guid userId)
+    {
+        User? target = _library.GetUser(userId);
+        if (target == null)
+        {
+            return NotFound();
+        }
+
+        return Json(new UserLibrariesDto
+        {
+            Libraries = _library.UserLibraries(target),
+            ExcludedLibraryIds = _userSettings.Get(target.Id).ExcludedLibraryIds.ToList(),
+        });
+    }
+
+    [HttpPost("Admin/UserLibraries")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public IActionResult SaveUserLibraries([FromQuery] Guid userId, [FromBody] JsonElement body)
+    {
+        User? target = _library.GetUser(userId);
+        if (target == null)
+        {
+            return NotFound();
+        }
+
+        UserLibrariesDto? dto = body.Deserialize<UserLibrariesDto>(JsonDefaults.Options);
+        if (dto == null)
+        {
+            return BadRequest();
+        }
+
+        UserSettings settings = _userSettings.Get(target.Id);
+        settings.ExcludedLibraryIds = dto.ExcludedLibraryIds;
+        _userSettings.Save(target.Id, settings);
+        return Json(new UserLibrariesDto
+        {
+            Libraries = _library.UserLibraries(target),
+            ExcludedLibraryIds = settings.ExcludedLibraryIds.ToList(),
+        });
     }
 
     [HttpGet("Admin/Libraries")]

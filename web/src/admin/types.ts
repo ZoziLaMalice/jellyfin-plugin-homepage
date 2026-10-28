@@ -93,3 +93,8 @@ export interface JellyfinUser {
   Id: string;
   Name: string;
 }
+
+export interface UserLibraries {
+  libraries: LibraryInfo[];
+  excludedLibraryIds: string[];
+}

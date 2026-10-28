@@ -1151,6 +1151,19 @@ html.hp-replace-search .hp-nav-search {
   color: var(--hp-text-dim);
 }
 
+.hp-panel-title {
+  padding: 0.5em 0 0.2em;
+  color: var(--hp-text-dim);
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hp-hint-block {
+  margin: -0.4em var(--hp-gutter) 0.8em;
+}
+
 .hp-section-move {
   display: flex;
 }

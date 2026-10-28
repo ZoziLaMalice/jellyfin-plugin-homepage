@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
+import { clearHeroCache } from '../components/Hero';
 import { Icon } from '../components/Icon';
 import { api } from '../jellyfin';
 import { pageHash } from '../route';
 import { layoutStore, toast } from '../store';
-import type { ClientLayout, ClientSection, UserSettings } from '../types';
+import type { ClientLayout, ClientSection, LibraryChoice, UserSettings } from '../types';
 import { clearSectionCache } from './HomePage';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -32,9 +33,11 @@ export function SettingsPage({ layout }: { layout: ClientLayout }) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [sections, setSections] = useState<ClientSection[]>(layout.sections);
   const [saving, setSaving] = useState(false);
+  const [libraries, setLibraries] = useState<LibraryChoice[]>([]);
 
   useEffect(() => {
     api<UserSettings>('Homepage/UserSettings').then(setSettings).catch(() => setSettings({ sections: [] }));
+    api<LibraryChoice[]>('Homepage/Libraries').then(setLibraries).catch(() => setLibraries([]));
   }, []);
 
   useEffect(() => setSections(layout.sections), [layout.generation]);
@@ -48,6 +51,7 @@ export function SettingsPage({ layout }: { layout: ClientLayout }) {
       });
       setSettings(next);
       clearSectionCache();
+      clearHeroCache();
       layoutStore.set(updated);
     } catch (e) {
       toast(`Enregistrement impossible : ${(e as Error).message}`, 'error');
@@ -68,6 +72,13 @@ export function SettingsPage({ layout }: { layout: ClientLayout }) {
     const next = sections.map((s, i) => (i === index ? { ...s, enabled } : s));
     setSections(next);
     if (settings) save(settings, next);
+  };
+
+  const excluded = new Set(settings?.excludedLibraryIds || []);
+  const toggleLibrary = (id: string, included: boolean) => {
+    if (!settings) return;
+    const next = included ? [...excluded].filter((x) => x !== id) : [...excluded, id];
+    save({ ...settings, excludedLibraryIds: next });
   };
 
   if (!settings) return <div class="hp-page"><div class="hp-spinner" /></div>;
@@ -121,6 +132,28 @@ export function SettingsPage({ layout }: { layout: ClientLayout }) {
           >
             <Icon name="restart_alt" /> Revenir à l'ordre par défaut
           </button>
+
+          {libraries.length > 0 && (
+            <>
+              <h2 class="hp-results-title">Mes bibliothèques</h2>
+              <p class="hp-hint hp-hint-block">Ce qui est décoché n'apparaît plus dans ton carrousel, tes sections ni ta recherche.</p>
+              {(['movies', 'tvshows'] as const).map((type) => {
+                const list = libraries.filter((l) => l.type === type);
+                if (list.length === 0) return null;
+                return (
+                  <div key={type} class="hp-panel hp-section-list">
+                    <div class="hp-panel-title">{type === 'movies' ? 'Films' : 'Séries'}</div>
+                    {list.map((l) => (
+                      <div key={l.id} class={`hp-section-item ${excluded.has(l.id) ? 'is-off' : ''}`}>
+                        <Toggle label={l.name} checked={!excluded.has(l.id)} disabled={saving} onChange={(v) => toggleLibrary(l.id, v)} />
+                        {l.isVirtual && <span class="hp-chip">Recommandations</span>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </>
+          )}
         </>
       )}
 
